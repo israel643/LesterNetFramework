@@ -5,9 +5,9 @@ using System.Web;
 
 namespace Lester.Models
 {
-    public class Embrages
+    public class Embarques
     {
-        public int Id { get; set; }
+        public int id { get; set; }
         public string codebar { get; set; }
         public string acronimo { get; set; }
         public DateTime fechaLectura { get; set; }
