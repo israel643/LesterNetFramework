@@ -1,7 +1,7 @@
-🚀 Proyecto de Generación y Exportación de Reportes en ASP.NET MVC
+# 🚀 Proyecto de Generación y Exportación de Reportes en ASP.NET MVC
 Este proyecto permite generar reportes basados en fechas y exportarlos a archivos de Excel. Utiliza ASP.NET MVC para la lógica del backend y Bootstrap 5 para un diseño responsivo y moderno.
 
-📋 Tabla de Contenidos
+## 📋 Tabla de Contenidos
 Descripción
 Características
 Tecnologías Utilizadas
@@ -10,10 +10,10 @@ Uso
 Procedimientos Almacenados
 Contribuciones
 Licencia
-📄 Descripción
+## 📄 Descripción
 Este proyecto permite a los usuarios generar reportes detallados y agrupados basados en un rango de fechas. Los reportes pueden visualizarse en la web y exportarse a un archivo de Excel para su análisis y almacenamiento.
 
-✨ Características
+## ✨ Características
 Generación de reportes unitarios y agrupados.
 Filtrado de reportes por fecha de inicio y/o fecha de finalización.
 Exportación de reportes a archivos de Excel.
@@ -24,7 +24,7 @@ C#
 Bootstrap 5
 Microsoft Excel Interop
 SQL Server
-🚀 Instalación
+## 🚀 Instalación
 Clona el repositorio:
 bash
 Copiar código
@@ -40,7 +40,7 @@ Navega a la página principal.
 Selecciona una fecha de inicio y/o una fecha de finalización.
 Haz clic en "Generar" para ver los reportes.
 Para exportar los reportes a Excel, haz clic en el botón "Exportar a Excel".
-🌟 Interfaz de Usuario
+## 🌟 Interfaz de Usuario
 Formulario de Selección de Fechas
 html
 Copiar código
@@ -197,6 +197,6 @@ public ActionResult ExporToExcel(DateTime? FechaInicio, DateTime? FechaDeFinaliz
     return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Reporte.xlsx");
 }
 
-📜 Licencia
+## 📜 Licencia
 Este proyecto está bajo la Licencia MIT.
 
