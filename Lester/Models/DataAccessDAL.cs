@@ -12,9 +12,9 @@ namespace Lester.Models
     {
         private string cadena;
 
-        public DataAccessDAL() 
+        public DataAccessDAL()
         {
-            cadena = System.Configuration.ConfigurationManager.ConnectionStrings["Lester"].ConnectionString; 
+            cadena = System.Configuration.ConfigurationManager.ConnectionStrings["Lester"].ConnectionString;
         }
 
         /// Modelo Creado con una consulta basica en SQL 
@@ -98,9 +98,74 @@ namespace Lester.Models
                 }
             }
             return agrupamientoList;
-        
+
         }
+
+        public List<TotalItemsCargados> GetTotalItemsCargados(DateTime? FechaInicio, DateTime? FechaDeFinalizacion)
+        {
+            List<TotalItemsCargados> totalItemsList = new List<TotalItemsCargados>();
+            using (SqlConnection conexion = new SqlConnection(cadena))
+            {
+                // Construir la consulta SQL dinámicamente
+                string query = @"
+            SELECT
+                Viaje,
+                SUM(CASE WHEN tipo > 0 THEN 1 ELSE 0 END) AS TotalItems
+            FROM
+                tblRFID_CodiCaptEmbarques
+            WHERE
+                1=1";
+
+                if (FechaInicio.HasValue)
+                {
+                    query += " AND fechaLectura >= @FechaInicio";
+                }
+                if (FechaDeFinalizacion.HasValue)
+                {
+                    query += " AND fechaLectura <= @FechaDeFinalizacion";
+                }
+
+                query += @"
+            GROUP BY
+                Viaje
+            ORDER BY
+                Viaje";
+
+                using (SqlCommand command = new SqlCommand(query, conexion))
+                {
+                    if (FechaInicio.HasValue)
+                    {
+                        command.Parameters.AddWithValue("@FechaInicio", FechaInicio.Value);
+                    }
+                    if (FechaDeFinalizacion.HasValue)
+                    {
+                        command.Parameters.AddWithValue("@FechaDeFinalizacion", FechaDeFinalizacion.Value);
+                    }
+
+                    conexion.Open();
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            TotalItemsCargados totalItem = new TotalItemsCargados()
+                            {
+                                Viaje = reader["Viaje"].ToString(),
+                                TotalItems = (int)reader["TotalItems"]
+                            };
+                            totalItemsList.Add(totalItem);
+                        }
+                    }
+                    conexion.Close();
+                }
+            }
+            return totalItemsList;
+        }
+
+
+
+
+
     }
 
-    
+
 }

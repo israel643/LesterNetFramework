@@ -145,6 +145,7 @@
     <Compile Include="Models\Agrupamiento.cs" />
     <Compile Include="Models\DataAccessDAL.cs" />
     <Compile Include="Models\Embarques.cs" />
+    <Compile Include="Models\TotalItemsCargados.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="System\Configuration\ConfigutarionManager.cs" />
   </ItemGroup>
@@ -198,7 +199,6 @@
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
-    <Content Include="Views\Home\ReporteView.cshtml" />
     <Content Include="Views\Home\ExporToExcel.cshtml" />
   </ItemGroup>
   <ItemGroup>

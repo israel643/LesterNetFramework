@@ -17,91 +17,143 @@ namespace Lester.Controllers
 {
     public class HomeController : Controller
     {
-            DataAccessDAL dataAccess = new DataAccessDAL();
+        DataAccessDAL dataAccess = new DataAccessDAL();
         public ActionResult Index()
         {
             return View();
         }
 
         [HttpPost]
-        public ActionResult Index(DateTime? FechaInicio, DateTime? FechaDeFinalizacion)
+        public ActionResult GenerateReport(DateTime? FechaInicio, DateTime? FechaDeFinalizacion, string ReportType)
         {
-            var data = dataAccess.GeneradorDeEmabrquesPorRango(FechaInicio, FechaDeFinalizacion);
-            ViewBag.FormularioEnviado = true;
-            
+            bool noRecords = false;
 
-
-            // Pasar los datos a la vista utilizando ViewBag, pero asegurando el tipo correcto
-            List<Embarques> reportUnitario = data.Select(items => new Embarques
+            if (ReportType == "Unitario")
             {
-                codebar = items.codebar,
-                acronimo = items.acronimo,
-                fechaLectura = items.fechaLectura,
-                Viaje = items.Viaje
-            }).ToList();
+                var data = dataAccess.GeneradorDeEmabrquesPorRango(FechaInicio, FechaDeFinalizacion);
+                List<Embarques> reportUnitario = data.Select(items => new Embarques
+                {
+                    codebar = items.codebar,
+                    acronimo = items.acronimo,
+                    fechaLectura = items.fechaLectura,
+                    Viaje = items.Viaje
+                }).ToList();
 
-            var filterData = dataAccess.GeneratorAddFilterByCount(FechaInicio, FechaDeFinalizacion);
+                ViewBag.ReportUnitario = reportUnitario;
+                noRecords = !reportUnitario.Any();
+            }
+            else if (ReportType == "Agrupamiento")
+            {
+                var dataFork = dataAccess.GeneratorAddFilterByCount(FechaInicio, FechaDeFinalizacion);
+                List<Agrupamiento> reportAgroup = dataFork.Select(elements => new Agrupamiento
+                {
+                    acronimo = elements.acronimo,
+                    cantidad = elements.cantidad,
+                    Viaje = elements.Viaje
+                }).ToList();
 
-            List<Agrupamiento> reportAgroup = filterData.Select(elements => new Agrupamiento
-            {  
-                acronimo = elements.acronimo,
-                cantidad = elements.cantidad,
-                Viaje  = elements.Viaje
-            }).ToList();
+                ViewBag.ReportAgroup = reportAgroup;
+                noRecords = !reportAgroup.Any();
+            }
+            else if (ReportType == "TotalA")
+            {
+                var dataTotal = dataAccess.GetTotalItemsCargados(FechaInicio, FechaDeFinalizacion);
+                List<TotalItemsCargados> reportTotal = dataTotal.Select(elements => new TotalItemsCargados
+                {
+                    Viaje = elements.Viaje,
+                    TotalItems = elements.TotalItems
+                }).ToList();
+                ViewBag.ReportTotal = reportTotal;
+            }
 
-
-
-            ViewBag.ReportAgroup = reportAgroup;
-            ViewBag.ReportUnitario = reportUnitario;
-
-            /// Guardamos los datos para poder acceder a ellos
             ViewBag.FechaInicio = FechaInicio;
             ViewBag.FechaDeFinalizacion = FechaDeFinalizacion;
+            ViewBag.ReportType = ReportType;
+            ViewBag.NoRecords = noRecords;
 
-            return View();
+            return View("Index");
         }
 
+
         [HttpGet]
-        public ActionResult ExporToExcel(DateTime? FechaInicio, DateTime? FechaDeFinalizacion)
+        public ActionResult ExporToExcel(DateTime? FechaInicio, DateTime? FechaDeFinalizacion, string ReportType)
         {
-            var reportUnitarioForExcel = dataAccess.GeneradorDeEmabrquesPorRango(FechaInicio, FechaDeFinalizacion);
-            var reportAgroupForExcel = dataAccess.GeneratorAddFilterByCount(FechaInicio, FechaDeFinalizacion);
-
-            if (reportUnitarioForExcel == null || reportAgroupForExcel == null)
-            {
-                return RedirectToAction("Index");
-            }
-
             var excelAPP = new Excel.Application();
             var LibroTrab = excelAPP.Workbooks.Add();
-            var hoja1 = (Excel.Worksheet)LibroTrab.Worksheets[1];
-            hoja1.Name = "Reporte Unitario";
+            Excel.Worksheet hoja;
 
-            hoja1.Cells[1, 1] = "Codebar";
-            hoja1.Cells[1, 2] = "Acrónimo";
-            hoja1.Cells[1, 3] = "Hora de Lectura";
-            hoja1.Cells[1, 4] = "Viaje";
-
-            for (int i = 0; i < reportUnitarioForExcel.Count; i++)
+            if (ReportType == "Unitario")
             {
-                hoja1.Cells[i + 2, 1] = reportUnitarioForExcel[i].codebar;
-                hoja1.Cells[i + 2, 2] = reportUnitarioForExcel[i].acronimo;
-                hoja1.Cells[i + 2, 3] = reportUnitarioForExcel[i].fechaLectura.ToShortTimeString();
-                hoja1.Cells[i + 2, 4] = reportUnitarioForExcel[i].Viaje;
+                var reportUnitarioForExcel = dataAccess.GeneradorDeEmabrquesPorRango(FechaInicio, FechaDeFinalizacion);
+
+                if (reportUnitarioForExcel == null)
+                {
+                    return RedirectToAction("Index");
+                }
+
+                hoja = (Excel.Worksheet)LibroTrab.Worksheets[1];
+                hoja.Name = "Reporte Unitario";
+
+                hoja.Cells[1, 1] = "Codebar";
+                hoja.Cells[1, 2] = "Acrónimo";
+                hoja.Cells[1, 3] = "Hora de Lectura";
+                hoja.Cells[1, 4] = "Viaje";
+
+                for (int i = 0; i < reportUnitarioForExcel.Count; i++)
+                {
+                    hoja.Cells[i + 2, 1] = reportUnitarioForExcel[i].codebar;
+                    hoja.Cells[i + 2, 2] = reportUnitarioForExcel[i].acronimo;
+                    hoja.Cells[i + 2, 3] = reportUnitarioForExcel[i].fechaLectura.ToShortTimeString();
+                    hoja.Cells[i + 2, 4] = reportUnitarioForExcel[i].Viaje;
+                }
             }
-
-            var hoja2 = (Excel.Worksheet)LibroTrab.Worksheets.Add();
-            hoja2.Name = "Reporte Agrupado";
-
-            hoja2.Cells[1, 1] = "Acrónimo";
-            hoja2.Cells[1, 2] = "Cantidad";
-            hoja2.Cells[1, 3] = "Viaje";
-
-            for (int i = 0; i < reportAgroupForExcel.Count; i++)
+            else if (ReportType == "Agrupamiento")
             {
-                hoja2.Cells[i + 2, 1] = reportAgroupForExcel[i].acronimo;
-                hoja2.Cells[i + 2, 2] = reportAgroupForExcel[i].cantidad;
-                hoja2.Cells[i + 2, 3] = reportAgroupForExcel[i].Viaje;
+                var reportAgroupForExcel = dataAccess.GeneratorAddFilterByCount(FechaInicio, FechaDeFinalizacion);
+
+                if (reportAgroupForExcel == null)
+                {
+                    return RedirectToAction("Index");
+                }
+
+                hoja = (Excel.Worksheet)LibroTrab.Worksheets[1];
+                hoja.Name = "Reporte total por Viaje";
+                hoja.Cells[1, 1] = "Acrónimo";
+                hoja.Cells[1, 2] = "Cantidad";
+                hoja.Cells[1, 3] = "Viaje";
+
+                for (int i = 0; i < reportAgroupForExcel.Count; i++)
+                {
+                    hoja.Cells[i + 2, 1] = reportAgroupForExcel[i].acronimo;
+                    hoja.Cells[i + 2, 2] = reportAgroupForExcel[i].cantidad;
+                    hoja.Cells[i + 2, 3] = reportAgroupForExcel[i].Viaje;
+                }
+            }
+            else if (ReportType == "TotalA")
+            {
+                var reportAgroupForExcel = dataAccess.GetTotalItemsCargados(FechaInicio, FechaDeFinalizacion);
+
+                if (reportAgroupForExcel == null)
+                {
+                    return RedirectToAction("Index");
+                }
+
+                hoja = (Excel.Worksheet)LibroTrab.Worksheets[1];
+                hoja.Name = "Reporte Agrupado";
+
+          
+                hoja.Cells[1, 2] = "Total";
+                hoja.Cells[1, 3] = "Viaje";
+
+                for (int i = 0; i < reportAgroupForExcel.Count; i++)
+                {
+                    hoja.Cells[i + 2, 1] = reportAgroupForExcel[i].TotalItems;
+                    hoja.Cells[i + 2, 2] = reportAgroupForExcel[i].Viaje;
+                }
+            }
+            else
+            {
+                return RedirectToAction("Index");
             }
 
             // Generar un nombre de archivo temporal único
@@ -111,8 +163,7 @@ namespace Lester.Controllers
             excelAPP.Quit();
 
             // Liberar recursos
-            Marshal.ReleaseComObject(hoja1);
-            Marshal.ReleaseComObject(hoja2);
+            Marshal.ReleaseComObject(hoja);
             Marshal.ReleaseComObject(LibroTrab);
             Marshal.ReleaseComObject(excelAPP);
 
@@ -124,5 +175,5 @@ namespace Lester.Controllers
         }
     }
 
-    
+
 }
